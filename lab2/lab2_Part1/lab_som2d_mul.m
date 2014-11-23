@@ -1,4 +1,4 @@
-function [som, grid] = lab_som2d (trainingData, neuronCountW, neuronCountH, trainingSteps, startLearningRate, startRadius)
+function [som, grid, snap_t] = lab_som2d_mul(trainingData, neuronCountW, neuronCountH, trainingSteps, startLearningRate, startRadius, num_snaps)
 % som = lab_som2d (trainingData, neuronCountW, neuronCountH, trainingSteps, startLearningRate, startRadius)
 % -- Purpose: Trains a 2D SOM, which consists of a grid of
 %             (neuronCountH * neuronCountW) neurons.
@@ -45,17 +45,11 @@ end
 
 neuronCountTotal = neuronCountH * neuronCountW;
 
-% random sub sample TODO
+% Random sub sample
+w = datasample(trainingData, neuronCount);
+
+% Completely random [0 1]
 w = rand(neuronCountTotal, d);
-
-n = 1
-
-for j = 1 : neuronCountW
-    for i = 1 : neuronCountH
-        w(n, :) = [i / neuronCountH, j / neuronCountW];
-		n = n + 1;
-    end	
-end
 
 grid = zeros(neuronCountTotal, 2);
 
@@ -65,6 +59,9 @@ for y = 1 : neuronCountW
      for x = 1 : neuronCountH
          grid(n, :) = [x, y];
          n = n + 1;
+         
+         % Nice grid
+         w(n, :) = [x / neuronCountH, y / neuronCountW];
      end
 end
 
@@ -72,6 +69,13 @@ t = 1;
 
 tau1 = trainingSteps
 tau2 = trainingSteps / log(startRadius)
+
+som = cell(num_snaps, 1);
+snap_t = zeros(num_snaps, 1);
+
+curr_snap = 1;
+snap_step = floor(floor(trainingSteps / num_snaps))
+cell_n = 1;
 
 while t <= trainingSteps
     x_n = trainingData(randi(N) , :);
@@ -98,10 +102,15 @@ while t <= trainingSteps
             w(k, :) = w(k, :) + n_t * h * (x_n - w(k, :));
         end
     end
+	
+	if t == curr_snap
+	    som{cell_n} = w;
+		curr_snap = curr_snap + snap_step;
+	    cell_n = cell_n + 1;
+        snap_t(cell_n) = t
+	end
     
     t = t + 1;
 end
-
-som = w;
 
 end

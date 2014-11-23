@@ -40,8 +40,13 @@ if nargin < 5
     startRadius = neuronCount / 2;
 end
 
-% random sub sample TODO
-som = rand(neuronCount, d);
+% Random sub sample
+som = datasample(trainingData, neuronCount);
+
+% Completely random from [0, 1]
+%som = rand(neuronCount, d);
+
+% Nice line TODO
 
 t = 1;
 
