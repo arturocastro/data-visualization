@@ -1,0 +1,56 @@
+function [imgs,features] = lab_featuresets (imgDir, featureFunc, maxSamples) 
+    fprintf(2, 'Exta
+    
+imgs = dir(imgDir);
+    % Remove . and ..
+    imgs(1) = [];
+    imgs(1) = [];
+    
+    if (maxSamples < 0)
+        maxSamples = size(imgs,1);
+    end
+    
+    for i=1:maxSamples   
+        imgs(i).name=sprintf('%s%s', imgDir,imgs(i).name);
+        img = imread(imgs(i).name);
+
+        [tf1,tf2,tf3,tf4,tf5] = featureFunc(img);
+        f1(i,:) = tf1;
+        if (size(tf2, 1) > 0)
+           f2(i,:) = tf2;
+        end
+        if (size(tf3, 1) > 0)
+           f3(i,:) = tf3;
+        end
+        if (size(tf4, 1) > 0)
+           f4(i,:) = tf4;
+        end
+        if (size(tf5, 1) > 0)
+           f5(i,:) = tf5;
+        end
+        
+        fprintf(2, '%d/%d %s\n', i, maxSamples, imgs(i).name); 
+    end
+    
+    f1=som_normalize(f1, 'var');
+    features = f1;
+    if (size(tf2, 1) > 0)
+        f2=som_normalize(f2, 'var');
+        features = [features f2];
+    end
+    if (size(tf3, 1) > 0)
+        f3=som_normalize(f3, 'var');
+        features = [features f3];
+    end
+    if (size(tf4, 1) > 0)
+        f4=som_normalize(f4, 'var');
+        features = [features f4];
+    end
+    if (size(tf5, 1) > 0)
+        f5=som_normalize(f5, 'var');
+        features = [features f5];
+    end
+
+    
+
+    
