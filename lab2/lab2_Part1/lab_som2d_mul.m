@@ -46,7 +46,7 @@ end
 neuronCountTotal = neuronCountH * neuronCountW;
 
 % Random sub sample
-w = datasample(trainingData, neuronCount);
+w = datasample(trainingData, neuronCountTotal);
 
 % Completely random [0 1]
 w = rand(neuronCountTotal, d);
@@ -58,10 +58,11 @@ n = 1;
 for y = 1 : neuronCountW
      for x = 1 : neuronCountH
          grid(n, :) = [x, y];
-         n = n + 1;
          
          % Nice grid
          w(n, :) = [x / neuronCountH, y / neuronCountW];
+         
+         n = n + 1;
      end
 end
 
