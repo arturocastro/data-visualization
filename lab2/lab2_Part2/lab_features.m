@@ -46,13 +46,15 @@ function [f1,f2,f3,f4,f5] = lab_features (img)
     %
     
     % TODO: Modify these parameters to your liking
-    IMAGE_DOWNSAMPLE_WIDTH = 50;            % Width to downsample the image to when calculating histograms
-    IMAGE_DOWNSAMPLE_HEIGHT = 50;           % As above, but height
-    GREYSCALE_HISTOGRAM_BUCKET_SIZE = 16;   % Number of buckets to use for greyscale histogram i.e. divides up the space 1-255
+    IMAGE_DOWNSAMPLE_WIDTH = 90;            % Width to downsample the image to when calculating histograms
+    IMAGE_DOWNSAMPLE_HEIGHT = 90;           % As above, but height
+    GREYSCALE_HISTOGRAM_BUCKET_SIZE = 32;   % Number of buckets to use for greyscale histogram i.e. divides up the space 1-255
     GREYSCALE_AREA_GRID_W = 3;              % Width of grid to use for Greyscale Area
     GREYSCALE_AREA_GRID_H = 3;              % As above but height
     RGB_AREA_GRID_W = 4;                    % Width of grid to use for RGB area
     RGB_AREA_GRID_H = 4;                    % As above but height
+    
+    RGB_HIST_BUCKET_SIZE = 256 / 3;
     
     f1=[];
     f2=[];
@@ -66,14 +68,63 @@ function [f1,f2,f3,f4,f5] = lab_features (img)
     %
     % RGB Histogram 
     %
-  
-    % TODO
-
+      % Build buckets
+    bh = RGB_HIST_BUCKET_SIZE;
+    bl = 0;
+    gshBuckets = [];
+    while (bl < 255)
+        gshBuckets = [gshBuckets; [bl, bh]];
+        bl = bh;
+        bh = bh + RGB_HIST_BUCKET_SIZE;
+    end
+    
+    % Place each pixel in a bucket
+    fHistogramRGB=zeros(1, size(gshBuckets, 1));
+    for y=1:size(imgDownSampled,1)
+        for x=1:size(imgDownSampled,2)
+            %pixelR = imgDownSampled(y, x, 1);
+            %pixelG = imgDownSampled(y, x, 2);
+            %pixelB = imgDownSampled(y, x, 3);
+            
+            for bucketIndex=1:size(gshBuckets,1)
+                pixel = imgDownSampled(y, x, bucketIndex);
+                if (pixel >= 256 * 2 / 3) 
+                    fHistogramRGB(bucketIndex) = fHistogramRGB(bucketIndex) + 1;
+                    break;
+                end
+            end        
+        end
+    end
+    
     %
     % RGB Area
     %
     
-    % TODO
+    imgAreaBlue = lab_downsample(imgDownSampled(:, :, 3), GREYSCALE_AREA_GRID_W, GREYSCALE_AREA_GRID_H);
+    fAreaBlue = [];
+    for y=1:size(imgAreaBlue, 1)
+        for x=1:size(imgAreaBlue, 2)
+            fAreaBlue = [fAreaBlue, imgAreaBlue(y,x,1)]; 
+        end
+    end
+    
+    imgAreaRed = lab_downsample(imgDownSampled(:, :, 1), GREYSCALE_AREA_GRID_W, GREYSCALE_AREA_GRID_H);
+    fAreaRed = [];
+    for y=1:size(imgAreaRed, 1)
+        for x=1:size(imgAreaRed, 2)
+            fAreaRed = [fAreaRed, imgAreaRed(y,x,1)]; 
+        end
+    end
+    
+    imgAreaGreen = lab_downsample(imgDownSampled(:, :, 2), GREYSCALE_AREA_GRID_W, GREYSCALE_AREA_GRID_H);
+    fAreaGreen = [];
+    for y=1:size(imgAreaGreen, 1)
+        for x=1:size(imgAreaGreen, 2)
+            fAreaGreen = [fAreaGreen, imgAreaGreen(y,x,1)]; 
+        end
+    end
+    
+    
    
     %
     % Greyscale Histogram
@@ -125,8 +176,10 @@ function [f1,f2,f3,f4,f5] = lab_features (img)
     %
     % Return features
     %
-               
-    f1 = fAreaGrey;
-    f2 = fTexture;
-    f3 = fHistogramGrey;
+      
+    f1 = fHistogramRGB;
+    f2 = [fAreaRed fAreaGreen fAreaBlue];
+    f3 = fAreaGrey;
+    f4 = fTexture;
+    f5 = fHistogramGrey;
     

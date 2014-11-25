@@ -31,48 +31,60 @@ function som = lab_som (trainingData, neuronCount, trainingSteps, startLearningR
 %   - How do you calculate the distance of two neurons when they are
 %     arranged on a single line?
 
-%net_axis_size = sqrt(neuronCount);
-
+% Metadata, number of examples and number of dimensions
 N = length(trainingData);
 d = length(trainingData(1, :));
 
+% If startRadius is not an param, default is half of the network's length.
 if nargin < 5
     startRadius = neuronCount / 2;
 end
 
-% Random sub sample
+% Initialization #1 - Random sub sample
 som = datasample(trainingData, neuronCount);
 
-% Completely random from [0, 1]
+% Initialization #1 - Completely random from [0, 1]
 %som = rand(neuronCount, d);
 
 % Nice line TODO
 
 t = 1;
 
+% t1 is current iterations, t2 is total iterations over log(startRadius)
 tau1 = trainingSteps;
 tau2 = trainingSteps / log(startRadius);
 
 while t <= trainingSteps
+    % Get random sample from data.
     x_n = trainingData(randi(N) , :);
     
+    % Obtain all distances from selected sample vector to all neurons.
     diffs = bsxfun(@minus, x_n, som);
     distances = mag(diffs);
     
+    % Get closest neuron (most alike / "winner").
     [min_distane, min_ix] = min(distances);
     
+    % Learning rate decay.
     n_t = startLearningRate * exp(t / tau1);
+    %n_t = 1 / (20 + t);
 
+    % Get radius for this iteration.
     sigma_t = startRadius * exp(-t / tau2);
     
+    % Update neurons in selected neighborhood (around winner).
     l = max(1, ceil(min_ix - sigma_t));
     r = min(neuronCount, floor(min_ix + sigma_t));
     
     for k = l : r
         distance = abs(k - min_ix);
         
-        h = exp((distance ^ 2) / ( 2 * (sigma_t ^ 2)));
+        sigma_sqr = sigma_t ^ 2;
         
+        % Kernel function.
+        h = exp( -(distance ^ 2) / (2 * sigma_sqr) );
+        
+        % Update weights.
         som(k, :) = som(k, :) + n_t * h * (x_n - som(k, :));
     end
     

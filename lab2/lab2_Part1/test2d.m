@@ -1,21 +1,15 @@
 data = nicering;
 
 grid_width = 30;
-grid_height = 20;
+grid_height = 30;
 
-steps = 1000;
+steps = 10000;
 
 learning_rate = 0.1;
 
-num_snaps = 8;
-
-radius = 10;
+radius = 20;
 tic;
-[som, grid, snaps_t] = lab_som2d_mul(data, grid_width, grid_height, steps, learning_rate, radius, 8);
+[som, grid] = lab_som2d(data, grid_width, grid_height, steps, learning_rate, radius);
 toc
 
-for n = 1 : num_snaps
-    subplot(2, 4, n);
-    lab_vis2d(som{n}, grid, data);
-    title(strcat('t = ', num2str(snaps_t(n))));
-end
+lab_vis2d(som, grid, data);

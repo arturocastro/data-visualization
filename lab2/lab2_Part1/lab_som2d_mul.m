@@ -67,8 +67,8 @@ end
 
 t = 1;
 
-tau1 = trainingSteps
-tau2 = trainingSteps / log(startRadius)
+tau1 = trainingSteps;
+tau2 = trainingSteps / log(startRadius);
 
 som = cell(num_snaps, 1);
 snap_t = zeros(num_snaps, 1);
@@ -80,25 +80,50 @@ cell_n = 1;
 while t <= trainingSteps
     x_n = trainingData(randi(N) , :);
     
+    % Obtain all distances from selected sample vector to all neurons.
     diffs = bsxfun(@minus, x_n, w);
     distances = mag(diffs);
     
+    % Get closest neuron (most alike / "winner").
     [min_distane, min_ix] = min(distances);
     
+    % Learning rate decay.
     n_t = startLearningRate * exp(t / tau1);
 
+    % Get radius for this iteration.
     sigma_t = startRadius * exp(-t / tau2);
     
     min_pos = grid(min_ix, :);
     
-    for k = 1 : neuronCountTotal
+    if sigma_t > 1.0
+        for k = 1 : neuronCountTotal
+            curr_pos = grid(k, :);
+
+            distance = eucdist(min_pos, curr_pos);
+
+            if distance <= sigma_t
+                sigma_sqr = sigma_t ^ 2;
+
+                % Kernel function.
+                h = exp( -(distance ^ 2) / (2 * sigma_sqr) );
+
+                % Update weights.
+                w(k, :) = w(k, :) + n_t * h * (x_n - w(k, :));
+            end
+        end
+    else
+        k = min_ix;
         curr_pos = grid(k, :);
-        
+
         distance = eucdist(min_pos, curr_pos);
-        
+
         if distance <= sigma_t
-            h = exp((distance ^ 2) / ( 2 * (sigma_t ^ 2)));
-        
+            sigma_sqr = sigma_t ^ 2;
+
+            % Kernel function.
+            h = exp( -(distance ^ 2) / (2 * sigma_sqr) );
+
+            % Update weights.
             w(k, :) = w(k, :) + n_t * h * (x_n - w(k, :));
         end
     end
@@ -106,8 +131,9 @@ while t <= trainingSteps
 	if t == curr_snap
 	    som{cell_n} = w;
 		curr_snap = curr_snap + snap_step;
-	    cell_n = cell_n + 1;
-        snap_t(cell_n) = t
+        snap_t(cell_n) = t;
+        cell_n = cell_n + 1;
+        t
 	end
     
     t = t + 1;

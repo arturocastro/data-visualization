@@ -36,26 +36,22 @@ function [som, grid] = lab_som2d (trainingData, neuronCountW, neuronCountH, trai
 % It is important to return the grid in the correct format so that
 % lab_vis2d() can render the SOM correctly
 
+% Metadata, number of examples and number of dimensions
 N = length(trainingData);
 d = length(trainingData(1, :));
 
-if nargin < 5
+% If startRadius is not an param, default is half of the network's length.
+if nargin < 6
     startRadius = min(neuronCountH, neuronCountW) / 2.0;
 end
 
 neuronCountTotal = neuronCountH * neuronCountW;
 
-% random sub sample TODO
-w = rand(neuronCountTotal, d);
+% Initialization #1 - Random sub sample
+w = datasample(trainingData, neuronCountTotal);
 
-n = 1
-
-for j = 1 : neuronCountW
-    for i = 1 : neuronCountH
-        w(n, :) = [i / neuronCountH, j / neuronCountW];
-		n = n + 1;
-    end	
-end
+% Initialization #1 - Completely random from [0, 1]
+%w = rand(neuronCountTotal, d);
 
 grid = zeros(neuronCountTotal, 2);
 
@@ -64,37 +60,68 @@ n = 1;
 for y = 1 : neuronCountW
      for x = 1 : neuronCountH
          grid(n, :) = [x, y];
+         
+         % Initialization #3 - Nice grid
+         w(n, :) = [x / neuronCountH, y / neuronCountW];
+         
          n = n + 1;
      end
 end
 
 t = 1;
 
-tau1 = trainingSteps
-tau2 = trainingSteps / log(startRadius)
+% t1 is current iterations, t2 is total iterations over log(startRadius)
+tau1 = trainingSteps;
+tau2 = trainingSteps / log(startRadius);
 
 while t <= trainingSteps
+    % Get random sample from data.
     x_n = trainingData(randi(N) , :);
     
+    % Obtain all distances from selected sample vector to all neurons.
     diffs = bsxfun(@minus, x_n, w);
     distances = mag(diffs);
     
+    % Get closest neuron (most alike / "winner").
     [min_distane, min_ix] = min(distances);
     
+    % Learning rate decay.
     n_t = startLearningRate * exp(t / tau1);
 
+    % Get radius for this iteration.
     sigma_t = startRadius * exp(-t / tau2);
     
     min_pos = grid(min_ix, :);
     
-    for k = 1 : neuronCountTotal
+    if sigma_t > 1.0
+        for k = 1 : neuronCountTotal
+            curr_pos = grid(k, :);
+
+            distance = eucdist(min_pos, curr_pos);
+
+            if distance <= sigma_t
+                sigma_sqr = sigma_t ^ 2;
+
+                % Kernel function.
+                h = exp( -(distance ^ 2) / (2 * sigma_sqr) );
+
+                % Update weights.
+                w(k, :) = w(k, :) + n_t * h * (x_n - w(k, :));
+            end
+        end
+    else
+        k = min_ix;
         curr_pos = grid(k, :);
-        
+
         distance = eucdist(min_pos, curr_pos);
-        
+
         if distance <= sigma_t
-            h = exp((distance ^ 2) / ( 2 * (sigma_t ^ 2)));
-        
+            sigma_sqr = sigma_t ^ 2;
+
+            % Kernel function.
+            h = exp( -(distance ^ 2) / (2 * sigma_sqr) );
+
+            % Update weights.
             w(k, :) = w(k, :) + n_t * h * (x_n - w(k, :));
         end
     end
