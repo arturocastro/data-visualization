@@ -66,7 +66,7 @@ while t <= trainingSteps
     [min_distane, min_ix] = min(distances);
     
     % Learning rate decay.
-    n_t = startLearningRate * exp(t / tau1);
+    n_t = startLearningRate * exp(-t / tau1);
     %n_t = 1 / (20 + t);
 
     % Get radius for this iteration.
